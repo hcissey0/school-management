@@ -1,0 +1,339 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String?  @unique
+  loginId   String   @unique
+  password  String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  image String? @db.Text
+
+  staff     Staff?
+  student   Student?
+  feedbacks Feedback[]
+}
+
+model Staff {
+  id                  String        @id @default(cuid())
+  ID                  String        @unique
+  role                StaffRole
+  position            String?
+  phone               String
+  firstName           String
+  lastName            String
+  DOB                 String
+  gender              Gender
+  address             String
+  town                String
+  phoneNumber         String
+  prevalentDisability String
+  medicalInfo         String
+  healthStatus        HealthStatus
+  languagesSpoken     String[]
+  maritalStatus       MaritalStatus
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId       String     @unique
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  classes   Class[]
+  timetable Timetable[]
+  courses   Course[]
+  meetingAttendace MeetingAttendance[]
+}
+
+model Student {
+  id                  String        @id @default(cuid())
+  ID                  String        @unique
+  firstName           String
+  lastName            String
+  DOB                 DateTime
+  gender              Gender
+  address             String
+  town                String
+  phoneNumber         String?
+  tribe               String
+  prevalentDisability String @default("None")
+  medicalInfo         String?
+  healthStatus        HealthStatus
+  languagesSpoken     String[]
+  maritalStatus       MaritalStatus
+
+  mothersName          String
+  mothersEmail         String?
+  mothersPhone         String
+  mothersOccupation    String
+  mothersMaritalStatus MaritalStatus
+
+  fathersName          String
+  fathersEmail         String?
+  fathersPhone         String
+  fathersOccupation    String
+  fathersMaritalStatus MaritalStatus
+
+  guardiansName          String
+  guardiansEmail         String?
+  guardiansPhone         String
+  guardiansOccupation    String
+  guardiansMaritalStatus MaritalStatus
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId  String  @unique
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  classId String?
+  class   Class?  @relation(fields: [classId], references: [id])
+
+  reports    Report[]
+  attentance ClassAttendance[]
+  grades     Grade[]
+}
+
+model Class {
+  id        String   @id @default(cuid())
+  ID        String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacherId    String
+  teacher      Staff      @relation(fields: [teacherId], references: [id])
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+
+  students   Student[]
+  timetable  Timetable[]
+  attendance ClassAttendance[]
+}
+
+model Department {
+  id   String @id @default(cuid())
+  ID   String @unique
+  name String
+
+  classes Class[]
+  courses Course[]
+  staff   Staff[]
+}
+
+model Course {
+  id      String @id @default(cuid())
+  code    String @unique
+  name    String
+  credits Int
+
+  departmentId String
+  department   Department @relation(fields: [departmentId], references: [id])
+  teacherId    String
+  teacher      Staff      @relation(fields: [teacherId], references: [id])
+
+  timetable  Timetable[]
+  grade      Grade[]
+  attendance ClassAttendance[]
+}
+
+model Timetable {
+  id        String    @id @default(cuid())
+  dayOfWeek DayOfWeek
+  startTime DateTime
+  endTime   DateTime
+
+  classId         String
+  class           Class         @relation(fields: [classId], references: [id])
+  courseId        String
+  course          Course        @relation(fields: [courseId], references: [id])
+  staffId         String
+  staff           Staff         @relation(fields: [staffId], references: [id])
+  classLocationId String
+  classLocation   ClassLocation @relation(fields: [classLocationId], references: [id])
+}
+
+model Library {
+  id    String @id @default(cuid())
+  name  String
+  books Book[]
+}
+
+model Book {
+  id     String @id @default(cuid())
+  title  String
+  author String
+  isbn   String @unique
+
+  libraryId  String
+  library    Library    @relation(fields: [libraryId], references: [id])
+  categories Category[]
+}
+
+model Category {
+  id    String @id @default(cuid())
+  name  String @unique
+  books Book[]
+}
+
+model Report {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+}
+
+model Feedback {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+}
+
+model Building {
+  id    String  @id @default(cuid())
+  name  String  @unique
+  image String? @db.Text
+
+  classLocations ClassLocation[]
+}
+
+model ClassLocation {
+  id   String @id @default(cuid())
+  name String @unique
+
+  buildingId String
+  building   Building @relation(fields: [buildingId], references: [id])
+
+  attendance ClassAttendance[]
+  timetable  Timetable[]
+}
+
+model ClassAttendance {
+  id     String           @id @default(cuid())
+  status AttendanceStatus
+  date   DateTime
+
+  studentId       String
+  student         Student       @relation(fields: [studentId], references: [id])
+  classId         String
+  class           Class         @relation(fields: [classId], references: [id])
+  classLocationId String
+  classLocation   ClassLocation @relation(fields: [classLocationId], references: [id])
+  courseId        String
+  course          Course        @relation(fields: [courseId], references: [id])
+}
+
+model Meeting {
+  id String @id @default(cuid())
+  title String
+  date DateTime
+
+  meetingAttendance MeetingAttendance[]
+}
+
+model MeetingAttendance {
+  id  String @id @default(cuid())
+  status AttendanceStatus
+  date DateTime
+
+  staffId String
+  staff Staff @relation(fields: [staffId], references: [id])
+
+  meetingId String
+  meeting Meeting @relation(fields: [meetingId], references: [id])
+  location String
+}
+
+model Grade {
+  id    String @id @default(cuid())
+  grade String
+
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id])
+  courseId  String
+  course    Course  @relation(fields: [courseId], references: [id])
+}
+
+model Event {
+  id          String   @id @default(cuid())
+  title       String
+  date        DateTime
+  description String
+}
+
+model Announcement {
+  id          String   @id @default(cuid())
+  title       String
+  date        DateTime
+  description String
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+}
+
+enum HealthStatus {
+  GOOD
+  FAIR
+  POOR
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Role {
+  ADMIN
+  STUDENT
+  STAFF
+}
+
+enum StaffRole {
+  TEACHING
+  NON_TEACHING
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum DayOfWeek {
+  Monday
+  Tuesday
+  Wednesday
+  Thursday
+  Friday
+  Saturday
+  Sunday
+}
