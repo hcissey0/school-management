@@ -28,42 +28,9 @@ import { toast } from "@/hooks/use-toast"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Loader2, X } from 'lucide-react'
 import { ImageUpload } from "@/components/image-upload"
+import { studentDefaultValues, studentFormSchema } from "@/lib/zod"
+import { Checkbox } from "@/components/ui/checkbox"
 
-const studentFormSchema = z.object({
-  firstName: z.string().min(2, { message: "First name must be at least 2 characters." }),
-  lastName: z.string().min(2, { message: "Last name must be at least 2 characters." }),
-  DOB: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, {
-    message: "Please enter a valid date in the format YYYY-MM-DD.",
-  }),
-  gender: z.enum(["MALE", "FEMALE", "OTHER"]),
-  address: z.string().min(2, { message: "Address must be at least 2 characters." }),
-  town: z.string().min(2, { message: "Town must be at least 2 characters." }),
-  phoneNumber: z.string().min(10, { message: "Phone number must be at least 10 characters." }),
-  tribe: z.string().min(2, { message: "Tribe must be at least 2 characters." }),
-  prevalentDisability: z.string().optional(),
-  medicalInfo: z.string().optional(),
-  healthStatus: z.enum(["GOOD", "FAIR", "POOR"]),
-  languagesSpoken: z.array(z.string()).min(1, { message: "At least one language is required" }),
-  maritalStatus: z.enum(["SINGLE", "MARRIED", "DIVORCED", "WIDOWED"]),
-
-  mothersName: z.string().min(2, { message: "Mother's name must be at least 2 characters." }),
-  mothersEmail: z.string({ message: "Please enter a valid email for mother." }),
-  mothersPhone: z.string().min(10, { message: "Mother's phone number must be at least 10 characters." }),
-  mothersOccupation: z.string().min(2, { message: "Mother's occupation must be at least 2 characters." }),
-  mothersMaritalStatus: z.enum(["SINGLE", "MARRIED", "DIVORCED", "WIDOWED"]),
-
-  fathersName: z.string().min(2, { message: "Father's name must be at least 2 characters." }),
-  fathersEmail: z.string({ message: "Please enter a valid email for father." }),
-  fathersPhone: z.string().min(10, { message: "Father's phone number must be at least 10 characters." }),
-  fathersOccupation: z.string().min(2, { message: "Father's occupation must be at least 2 characters." }),
-  fathersMaritalStatus: z.enum(["SINGLE", "MARRIED", "DIVORCED", "WIDOWED"]),
-
-  guardiansName: z.string().min(2, { message: "Guardian's name must be at least 2 characters." }),
-  guardiansEmail: z.string({ message: "Please enter a valid email for guardian." }),
-  guardiansPhone: z.string().min(10, { message: "Guardian's phone number must be at least 10 characters." }),
-  guardiansOccupation: z.string().min(2, { message: "Guardian's occupation must be at least 2 characters." }),
-  guardiansMaritalStatus: z.enum(["SINGLE", "MARRIED", "DIVORCED", "WIDOWED"]),
-})
 
 type StudentFormValues = z.infer<typeof studentFormSchema>
 
@@ -73,6 +40,11 @@ export default function AddStudentPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [newLanguage, setNewLanguage] = useState("")
   const [image, setImage] = useState<string | null>(null);
+
+  const form = useForm<StudentFormValues>({
+    resolver: zodResolver(studentFormSchema),
+    defaultValues: studentDefaultValues,
+  })
 
   const handleImageUpload = async (file: File) => {
     // when image is uploaded,
@@ -92,39 +64,9 @@ export default function AddStudentPage() {
 
   }
 
-  const form = useForm<StudentFormValues>({
-    resolver: zodResolver(studentFormSchema),
-    defaultValues: {
-      firstName: "",
-      lastName: "",
-      DOB: "",
-      gender: undefined,
-      address: "",
-      town: "",
-      phoneNumber: "",
-      tribe: "",
-      prevalentDisability: "",
-      medicalInfo: "",
-      healthStatus: undefined,
-      languagesSpoken: [],
-      maritalStatus: undefined,
-      mothersName: "",
-      mothersEmail: "",
-      mothersPhone: "",
-      mothersOccupation: "",
-      mothersMaritalStatus: undefined,
-      fathersName: "",
-      fathersEmail: "",
-      fathersPhone: "",
-      fathersOccupation: "",
-      fathersMaritalStatus: undefined,
-      guardiansName: "",
-      guardiansEmail: "",
-      guardiansPhone: "",
-      guardiansOccupation: "",
-      guardiansMaritalStatus: undefined,
-    },
-  })
+  const motherIsAlive = form.watch('motherIsAlive');
+  const fatherIsAlive = form.watch('fatherIsAlive');
+  const guardianIsAlive = form.watch('guardianIsAlive');
 
   async function onSubmit(data: StudentFormValues) {
     setIsSubmitting(true)
@@ -400,8 +342,13 @@ export default function AddStudentPage() {
                         <Input
                           placeholder="Enter a language"
                           value={newLanguage}
-                          onChange={(e) => setNewLanguage(e.target.value)
-                          }
+                          onChange={(e) => setNewLanguage(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key == "Enter") {
+                              e.preventDefault();
+                              addLanguage();
+                            }
+                          }}
                         />
                         <Button type="button" onClick={addLanguage}>
                           Add
@@ -433,8 +380,21 @@ export default function AddStudentPage() {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row justify-between">
               <CardTitle>Mother's Information</CardTitle>
+              <FormField
+                  control={form.control}
+                  name="motherIsAlive"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <FormLabel>Mother  is alive</FormLabel>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -445,7 +405,7 @@ export default function AddStudentPage() {
                     <FormItem>
                       <FormLabel>Mother's Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Jane Doe" {...field} />
+                        <Input placeholder="" {...field} disabled={!motherIsAlive}/>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -458,7 +418,7 @@ export default function AddStudentPage() {
                     <FormItem>
                       <FormLabel>Mother's Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="jane@example.com" {...field} />
+                        <Input disabled={!motherIsAlive} placeholder="jane@example.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -471,7 +431,7 @@ export default function AddStudentPage() {
                     <FormItem>
                       <FormLabel>Mother's Phone</FormLabel>
                       <FormControl>
-                        <Input placeholder="+254 123 456 789" {...field} />
+                        <Input disabled={!motherIsAlive} placeholder="+254 123 456 789" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -484,7 +444,7 @@ export default function AddStudentPage() {
                     <FormItem>
                       <FormLabel>Mother's Occupation</FormLabel>
                       <FormControl>
-                        <Input placeholder="Teacher" {...field} />
+                        <Input disabled={!motherIsAlive} placeholder="Teacher" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -496,7 +456,7 @@ export default function AddStudentPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Mother's Marital Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select disabled={!motherIsAlive} onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select marital status" />
@@ -518,8 +478,21 @@ export default function AddStudentPage() {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row justify-between">
               <CardTitle>Father's Information</CardTitle>
+              <FormField
+                  control={form.control}
+                  name="fatherIsAlive"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <FormLabel>Father Is Alive</FormLabel>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -530,7 +503,7 @@ export default function AddStudentPage() {
                     <FormItem>
                       <FormLabel>Father's Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="John Doe" {...field} />
+                        <Input disabled={!fatherIsAlive} placeholder="John Doe" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -543,7 +516,7 @@ export default function AddStudentPage() {
                     <FormItem>
                       <FormLabel>Father's Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="john@example.com" {...field} />
+                        <Input disabled={!fatherIsAlive} placeholder="john@example.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -556,7 +529,7 @@ export default function AddStudentPage() {
                     <FormItem>
                       <FormLabel>Father's Phone</FormLabel>
                       <FormControl>
-                        <Input placeholder="+254 123 456 789" {...field} />
+                        <Input disabled={!fatherIsAlive} placeholder="+254 123 456 789" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -569,7 +542,7 @@ export default function AddStudentPage() {
                     <FormItem>
                       <FormLabel>Father's Occupation</FormLabel>
                       <FormControl>
-                        <Input placeholder="Engineer" {...field} />
+                        <Input disabled={!fatherIsAlive} placeholder="Engineer" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -581,7 +554,7 @@ export default function AddStudentPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Father's Marital Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select disabled={!fatherIsAlive} onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select marital status" />
@@ -603,8 +576,21 @@ export default function AddStudentPage() {
           </Card>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-row justify-between">
               <CardTitle>Guardian's Information</CardTitle>
+              <FormField
+                  control={form.control}
+                  name="guardianIsAlive"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                      </FormControl>
+                      <FormLabel>Guardian Is Alive</FormLabel>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -615,7 +601,7 @@ export default function AddStudentPage() {
                     <FormItem>
                       <FormLabel>Guardian's Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="Guardian Name" {...field} />
+                        <Input disabled={!guardianIsAlive} placeholder="Guardian Name" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -628,7 +614,7 @@ export default function AddStudentPage() {
                     <FormItem>
                       <FormLabel>Guardian's Email</FormLabel>
                       <FormControl>
-                        <Input placeholder="guardian@example.com" {...field} />
+                        <Input disabled={!guardianIsAlive} placeholder="guardian@example.com" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -641,7 +627,7 @@ export default function AddStudentPage() {
                     <FormItem>
                       <FormLabel>Guardian's Phone</FormLabel>
                       <FormControl>
-                        <Input placeholder="+254 123 456 789" {...field} />
+                        <Input disabled={!guardianIsAlive} placeholder="+254 123 456 789" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -654,7 +640,7 @@ export default function AddStudentPage() {
                     <FormItem>
                       <FormLabel>Guardian's Occupation</FormLabel>
                       <FormControl>
-                        <Input placeholder="Occupation" {...field} />
+                        <Input disabled={!guardianIsAlive} placeholder="Occupation" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -666,7 +652,7 @@ export default function AddStudentPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Guardian's Marital Status</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select disabled={!guardianIsAlive} onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Select marital status" />
@@ -727,6 +713,7 @@ export default function AddStudentPage() {
 // import { toast } from "@/hooks/use-toast"
 // import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 // import { ImageUpload } from "@/components/image-upload"
+import { clsx } from 'clsx';
 
 // const studentFormSchema = z.object({
 //   firstName: z.string().min(2, {

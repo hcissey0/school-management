@@ -151,8 +151,8 @@ export function ImageUpload({ onImageCapture }: ImageUploadButtonProps) {
       />
       <Dialog open={isDialogOpen} onOpenChange={closeDialog}>
         <DialogContent>
-          <DialogHeader>
             <DialogTitle>Take a Photo</DialogTitle>
+          <DialogHeader>
             <DialogDescription>
         Use your camera to take a photo or upload an image file.
       </DialogDescription>

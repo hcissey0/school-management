@@ -181,7 +181,7 @@ async function seedGhanaianStudent() {
 
         const studentsToCreate = 100;
 
-       
+
 
         for (let i = 0; i < studentsToCreate; i++) {
             const firstName = faker.person.firstName();
@@ -209,7 +209,7 @@ async function seedGhanaianStudent() {
                     loginId: await generateUniqueLoginId("STUDENT"),
                     password: await bcrypt.hash(loginId, 10),
                     role: 'STUDENT',
-                    image: faker.image.dataUri({ width: 100, height: 100 }),
+                    image: faker.image.dataUri({ width: 100, height: 100,  }),
                 }
             });
 

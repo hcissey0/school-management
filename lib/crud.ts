@@ -32,10 +32,10 @@ export async function getStudents(page: number = 1, limit: number = 50) {
 }
 
 // get a single student
-export async function getStudentByID(id: string) {
+export async function getStudentByID(ID: string) {
     const student = await prisma.student.findUnique({
         where: {
-            ID: id,
+            ID,
         },
     });
     return student;
@@ -63,4 +63,4 @@ export async function getStaffByID(id: string) {
         },
     });
     return staff;
-} 
+}

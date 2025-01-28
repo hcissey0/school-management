@@ -71,33 +71,36 @@ model Student {
   lastName            String
   DOB                 DateTime
   gender              Gender
-  address             String
-  town                String
+  address             String?
+  town                String?
   phoneNumber         String?
-  tribe               String
-  prevalentDisability String @default("None")
-  medicalInfo         String?
-  healthStatus        HealthStatus
+  tribe               String?
+  prevalentDisability String? @default("None")
+  medicalInfo         String? @default("None")
+  healthStatus        HealthStatus? @default(GOOD)
   languagesSpoken     String[]
-  maritalStatus       MaritalStatus
+  maritalStatus       MaritalStatus? @default(SINGLE)
 
-  mothersName          String
+  motherIsAlive Boolean?
+  mothersName          String?
   mothersEmail         String?
-  mothersPhone         String
-  mothersOccupation    String
-  mothersMaritalStatus MaritalStatus
+  mothersPhone         String?
+  mothersOccupation    String?
+  mothersMaritalStatus MaritalStatus?
 
-  fathersName          String
+  fatherIsAlive Boolean?
+  fathersName          String?
   fathersEmail         String?
-  fathersPhone         String
-  fathersOccupation    String
-  fathersMaritalStatus MaritalStatus
+  fathersPhone         String?
+  fathersOccupation    String?
+  fathersMaritalStatus MaritalStatus?
 
-  guardiansName          String
+  guardianIsAlive Boolean?
+  guardiansName          String?
   guardiansEmail         String?
-  guardiansPhone         String
-  guardiansOccupation    String
-  guardiansMaritalStatus MaritalStatus
+  guardiansPhone         String?
+  guardiansOccupation    String?
+  guardiansMaritalStatus MaritalStatus?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

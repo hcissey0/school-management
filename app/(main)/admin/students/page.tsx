@@ -123,6 +123,7 @@ import { getInitials } from "@/lib/utils";
 import { Avatar } from "@radix-ui/react-avatar";
 import { Edit, Loader2, Trash, ChevronDown } from 'lucide-react';
 import Link from "next/link";
+import { DialogTitle } from '@/components/ui/dialog';
 import { useEffect, useState } from "react";
 import {
     DropdownMenu,
@@ -164,12 +165,15 @@ const columns: Column[] = [
         id: 'image',
         label: 'Image',
         render: (student) => (
+
+            <Link href={`/admin/students/${student.ID}`}>
             <Avatar className="h-10 w-10 rounded-lg">
                 <AvatarImage className=" h-10 w-10 rounded-lg" src={student.user?.image || ''} />
                 <AvatarFallback className=" h-10 w-10 rounded-lg">
                     {getInitials(student.firstName + ' ' + student.lastName)}
                 </AvatarFallback>
             </Avatar>
+            </Link>
         )
     },
     {
@@ -212,7 +216,9 @@ export default function StudentPage() {
     const [isDeleting, setIsDeleting] = useState(false);
     const [genderFilter, setGenderFilter] = useState('');
     const [sortColumn, setSortColumn] = useState<keyof Student>('ID');
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+    const [total, setTotal] = useState(0);
+    const [showing, setShowing] = useState(0);
     const [visibleColumns, setVisibleColumns] = useState<Record<string, boolean>>(
         Object.fromEntries(columns.map(column => {
             console.log(window.innerWidth)
@@ -241,6 +247,11 @@ export default function StudentPage() {
             } else {
                 setStudents(prev => [...prev, ...result.students]);
             }
+            if (pageNum * 50 >= result.total) {
+                setShowing(result.total)
+            } else setShowing(pageNum * 50);
+
+            setTotal(result.total)
             setHasMore(result.hasMore);
         } catch (error) {
             console.error('Failed to load students:', error);
@@ -300,6 +311,8 @@ export default function StudentPage() {
 
             setStudents(prev => prev.filter(s => s.id !== studentToDelete.id));
             setDeleteDialogOpen(false);
+            setShowing(showing - 1)
+            setTotal(total - 1);
         } catch (error) {
             console.error('Error deleting student:', error);
             toast({
@@ -472,9 +485,11 @@ export default function StudentPage() {
                                         {visibleColumns.gender && <TableCell>{student.gender}</TableCell>}
                                         {visibleColumns.phone && <TableCell>{student.phoneNumber}</TableCell>} */}
                                 <TableCell className="text-right">
+                                    <Link href={`/admin/students/${student.ID}`}>
                                     <Button variant="ghost" size="icon">
                                         <Edit className="h-4 w-4" />
                                     </Button>
+                                    </Link>
                                     <Button
                                         variant="ghost"
                                         size="icon"
@@ -493,6 +508,11 @@ export default function StudentPage() {
                     </TableBody>
                 </Table>
             </div>
+            {!loading &&
+            <div>
+                Showing {showing} of {total}
+            </div>
+            }
             {hasMore && (
                 <div className="flex justify-center mt-4">
                     <Button
@@ -507,6 +527,7 @@ export default function StudentPage() {
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
+
                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                         <AlertDialogDescription>
                             This will permanently delete {studentToDelete?.firstName} {studentToDelete?.lastName}'s record and all associated data. This action cannot be undone.
@@ -517,7 +538,7 @@ export default function StudentPage() {
                         <AlertDialogAction
                             onClick={handleDeleteConfirm}
                             disabled={isDeleting}
-                            className="bg-red-600 hover:bg-red-700"
+                            className="bg-red-600 text-white hover:bg-red-700"
                         >
                             {isDeleting ? (
                                 <>
